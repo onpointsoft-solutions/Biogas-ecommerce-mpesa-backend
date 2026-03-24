@@ -123,25 +123,36 @@ def initiate_mpesa_payment(request):
         phone_number = format_phone_number(data['customer_phone'])
         amount = float(data['amount'])
         
-        # Create payment record
-        payment = Payment.objects.create(
-            amount=amount,
-            phone_number=phone_number,
-            reference=data['booking_id'],
-            status='pending',
-            metadata={
-                'booking_id': data['booking_id'],
-                'customer_id': data.get('customer_id', ''),
-                'customer_name': data['customer_name'],
-                'customer_email': data['customer_email'],
-                'service_name': data.get('service_name', ''),
-                'service_fee': data.get('service_fee', 0),
-                'platform_fee': data.get('platform_fee', 0),
-                'technician_id': data.get('technician_id', ''),
-                'technician_name': data.get('technician_name', ''),
-                'technician_phone': data.get('technician_phone', ''),
-            }
-        )
+        # Create payment record with temporary checkout_request_id
+        import uuid
+        temp_checkout_id = f"temp_{uuid.uuid4().hex[:16]}"
+        
+        try:
+            payment = Payment.objects.create(
+                checkout_request_id=temp_checkout_id,
+                amount=amount,
+                phone_number=phone_number,
+                reference=data['booking_id'],
+                status='pending',
+                metadata={
+                    'booking_id': data['booking_id'],
+                    'customer_id': data.get('customer_id', ''),
+                    'customer_name': data['customer_name'],
+                    'customer_email': data['customer_email'],
+                    'service_name': data.get('service_name', ''),
+                    'service_fee': data.get('service_fee', 0),
+                    'platform_fee': data.get('platform_fee', 0),
+                    'technician_id': data.get('technician_id', ''),
+                    'technician_name': data.get('technician_name', ''),
+                    'technician_phone': data.get('technician_phone', ''),
+                }
+            )
+        except Exception as e:
+            logger.error(f"Payment creation error: {e}")
+            return Response(
+                {"error": "Failed to create payment record", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
         # Get OAuth token
         try:
@@ -189,9 +200,19 @@ def initiate_mpesa_payment(request):
             
             if stk_response.get('ResponseCode') == '0':
                 # Update payment with STK Push details
-                payment.checkout_request_id = stk_response.get('CheckoutRequestID')
-                payment.merchant_request_id = stk_response.get('MerchantRequestID')
-                payment.save()
+                actual_checkout_id = stk_response.get('CheckoutRequestID')
+                try:
+                    payment.checkout_request_id = actual_checkout_id
+                    payment.merchant_request_id = stk_response.get('MerchantRequestID')
+                    payment.save()
+                except Exception as e:
+                    # Handle potential duplicate checkout_request_id
+                    logger.error(f"Payment update error: {e}")
+                    payment.mark_failed(1, f'Duplicate checkout request ID: {str(e)}', {})
+                    return Response(
+                        {"error": "Failed to update payment with checkout ID", "details": str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
                 
                 logger.info(f"STK Push sent successfully: {payment.checkout_request_id}")
                 

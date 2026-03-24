@@ -10,7 +10,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'mobilemealscenter.pythonanywhere.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -113,9 +113,47 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
 
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'payments': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
 # M-Pesa settings
 MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')
-MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '')
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
 MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', 'pnMOaGGsCE2qYSRj9I2U01GoPoqMksmR')
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '1iLEfnZm2bm3FHt2')
-MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://your-domain.com/api/mpesa/callback/')
+MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://mobilemealscenter.pythonanywhere.com/api/mpesa/callback/')
