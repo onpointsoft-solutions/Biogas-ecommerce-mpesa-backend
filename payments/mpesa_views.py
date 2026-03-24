@@ -165,7 +165,7 @@ def initiate_mpesa_payment(request):
             )
         
         # Generate timestamp and password
-        timestamp = str(int(datetime.now().timestamp() * 1000))
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         password = generate_stk_push_password(timestamp)
         
         # Prepare STK Push request
@@ -296,7 +296,7 @@ def check_payment_status(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-        timestamp = str(int(datetime.now().timestamp() * 1000))
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         password = generate_stk_push_password(timestamp)
         
         query_data = {
