@@ -10,7 +10,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-prod
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'mobilemealscenter.pythonanywhere.com').split(',')
+ALLOWED_HOSTS =["*"]
 
 # Application definition
 INSTALLED_APPS = [
